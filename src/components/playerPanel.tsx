@@ -11,7 +11,7 @@ export default function PlayerPanel({ state }: { state: GameState }) {
             idx === state.currentPlayer ? 'ring-2 ring-blue-500' : 'border-zinc-200',
           ].join(' ')}
         >
-          <div className="text-sm font-semibold">{p.name} {p.bankrupt && '💀'}</div>
+          <div className="text-sm text-zinc-600 font-semibold">{p.name} {p.bankrupt && '💀'}</div>
           <div className="text-xs text-zinc-600">Cash: ${p.cash}</div>
           <div className="text-xs text-zinc-600">Pos: {p.position}</div>
           <div className="text-xs text-zinc-600">Jail: {p.inJailTurns ? `${p.inJailTurns} turn` : 'no'}</div>

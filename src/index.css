@@ -1,3 +1,19 @@
+@import "tailwindcss";
+
+@layer base {
+  html { color-scheme: light dark; }
+
+  body {
+    @apply text-zinc-800 bg-white;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      @apply text-zinc-100 bg-zinc-900;
+    }
+  }
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

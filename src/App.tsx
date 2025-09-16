@@ -1,26 +1,44 @@
-import './App.css'
+import { useReducer } from 'react';
+import Board from './components/board';
+import Controls from './components/controls';
+import PlayerPanel from './components/playerPanel';
+import { initialState, reducer } from './games/engine';
 
-function App() {
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, undefined, () => initialState(['Alice', 'Bob']));
+
   return (
-    <>
-    <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-6">
-      <h1 className="text-4xl font-extrabold text-center mb-8">
-        Monopoly MVP
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-6 space-y-4">
+      <h1 className="text-3xl font-extrabold text-center">Property Tycoon (MVP)</h1>
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <h2 className="text-xl font-bold">Players</h2>
+        <div className="bg-white/80 backdrop-blur rounded-xl shadow p-4">
+          <PlayerPanel state={state} />
         </div>
 
-        <div className="bg-white rounded-xl shadow p-4 col-span-2">
-          <h2 className="text-xl font-bold">Game Board</h2>
+        <div className="col-span-2 bg-white/80 backdrop-blur rounded-xl shadow p-4 space-y-4">
+          <Controls
+            state={state}
+            onRoll={() => dispatch({ type: 'ROLL' })}
+            onBuy={() => dispatch({ type: 'BUY' })}
+            onSkip={() => dispatch({ type: 'SKIP_BUY' })}
+            onEnd={() => dispatch({ type: 'END_TURN' })}
+          />
+          <Board state={state} />
+          <div className="space-y-1">
+            <div className="text-sm font-semibold">Log</div>
+            {state.log.map((l, i) => (
+              <div key={i} className="text-xs text-zinc-700">• {l}</div>
+            ))}
+          </div>
+          <button
+            className="px-3 py-1.5 rounded-md border border-zinc-300"
+            onClick={() => dispatch({ type: 'RESET' })}
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>
-
-    </>
-  )
+  );
 }
-
-export default App
