@@ -4,6 +4,8 @@ import { makeTiles } from './tiles';
 const startCash = 1500;
 const passGoAmount = 100;
 
+type InitInput = string[] | Array<Partial<Player> & { name: string }>;
+
 const nextAlive = (gs: GameState, idx: number): number => {
   const n = gs.players.length;
   for (let i = 1; i <= n; i++) {

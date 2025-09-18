@@ -16,6 +16,8 @@ export interface Player {
   cash: number;
   inJailTurns: number; 
   bankrupt: boolean;
+  color?: string;
+  isBot?: boolean;
 }
 
 export type Phase = 'idle' | 'buy_prompt' | 'end';
