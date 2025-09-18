@@ -9,7 +9,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-6 space-y-4">
-      <h1 className="text-3xl font-extrabold text-center">Property Tycoon (MVP)</h1>
+      <h1 className="text-3xl font-extrabold text-center">Property Tycoon</h1>
 
       <div className="grid grid-cols-3 gap-6">
         <div className="bg-white/80 backdrop-blur rounded-xl shadow p-4">
