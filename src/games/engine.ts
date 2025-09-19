@@ -28,16 +28,35 @@ const credit = (p: Player, amount: number): void => { p.cash += amount; };
 const goToJail = (p: Player): void => { p.position = 4; p.inJailTurns = 1; };
 const log = (gs: GameState, msg: string) => { gs.log = [msg, ...gs.log].slice(0, 50); };
 
-export const initialState = (playerNames = ['Alice','Bob']): GameState => ({
-  tiles: makeTiles(),
-  players: playerNames.map((name, i) => ({
-    id: i, name, position: 0, cash: 1500, inJailTurns: 0, bankrupt: false
-  })),
-  currentPlayer: 0,
-  dice: null,
-  phase: 'idle' as Phase, 
-  log: ['Game started']
-});
+export const initialState = (players: InitInput = ['Alice','Bob']): GameState => {
+  const normalized: Player[] = (Array.isArray(players) ? players : []).map((p, i) => {
+    if (typeof p === 'string') {
+      return { id: i, name: p, position: 0, cash: startCash, inJailTurns: 0, bankrupt: false };
+    }
+    return {
+      id: i,
+      name: p.name,
+      position: 0,
+      cash: startCash,
+      inJailTurns: 0,
+      bankrupt: false,
+      color: p.color ?? undefined,
+      isBot: !!p.isBot,
+    };
+  });
+
+  return {
+    tiles: makeTiles(),
+    players: normalized.length ? normalized : [
+      { id: 0, name: 'Alice', position: 0, cash: startCash, inJailTurns: 0, bankrupt: false },
+      { id: 1, name: 'Bob',   position: 0, cash: startCash, inJailTurns: 0, bankrupt: false },
+    ],
+    currentPlayer: 0,
+    dice: null,
+    phase: 'idle' as Phase,
+    log: ['Game started'],
+  };
+};
 
 const resolveLanding = (gs: GameState, p: Player, tile: Tile) => {
   switch (tile.type) {
