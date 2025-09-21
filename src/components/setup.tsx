@@ -8,38 +8,59 @@ type SetupPlayer = {
 
 const presetColors = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#a855f7','#06b6d4'];
 
-export default function Setup({ onStart }: {
-  onStart: (players: SetupPlayer[]) => void;
-}) {
+export default function Setup({ onStart }: { onStart: (players: SetupPlayer[]) => void }) {
   const [count, setCount] = useState(2);
   const [players, setPlayers] = useState<SetupPlayer[]>(() =>
     Array.from({ length: 2 }, (_, i) => ({
       name: i === 0 ? 'You' : 'Player 2',
       color: presetColors[i % presetColors.length],
-      isBot: i !== 0,
+      isBot: i === 0 ? false : true, 
     }))
   );
+  const [error, setError] = useState<string>('');
 
   useMemo(() => {
     setPlayers(prev => {
       const next = [...prev];
+
       if (count > prev.length) {
         for (let i = prev.length; i < count; i++) {
           next.push({
-            name: `Player ${i+1}`,
+            name: `Player ${i + 1}`,
             color: presetColors[i % presetColors.length],
-            isBot: i !== 0,
+            isBot: i === 0 ? false : true,
           });
         }
-      } else if (count < prev.length) {
+      }
+      if (count < prev.length) {
         next.length = count;
       }
+      if (next[0]) next[0].isBot = false;
+
       return next;
     });
+    setError('');
   }, [count]);
 
   const update = (idx: number, patch: Partial<SetupPlayer>) => {
-    setPlayers(ps => ps.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
+    setPlayers(ps =>
+      ps.map((p, i) => {
+        if (i !== idx) return p;
+        const enforced: Partial<SetupPlayer> =
+          i === 0 && 'isBot' in patch ? { ...patch, isBot: false } : patch;
+        return { ...p, ...enforced };
+      })
+    );
+    setError('');
+  };
+
+  const handleStart = () => {
+    const hasBot = players.slice(1).some(p => p.isBot);
+    if (!hasBot) {
+      setError('At least one player (other than Player 1) must be a Computer.');
+      return;
+    }
+    onStart(players);
   };
 
   return (
@@ -79,23 +100,36 @@ export default function Setup({ onStart }: {
                   aria-label={`Player ${idx + 1} color`}
                 />
               </div>
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={p.isBot}
-                  onChange={(e) => update(idx, { isBot: e.target.checked })}
-                />
-                <span className="text-sm">Computer</span>
-              </label>
+
+              {idx === 0 ? (
+                <div className="text-sm text-zinc-500 select-none">
+                  Computer: <span className="inline-block px-2 py-1 rounded bg-zinc-100 text-zinc-500">Not allowed</span>
+                </div>
+              ) : (
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={p.isBot}
+                    onChange={(e) => update(idx, { isBot: e.target.checked })}
+                  />
+                  <span className="text-sm">Computer</span>
+                </label>
+              )}
             </div>
           </div>
         ))}
       </div>
 
+      {error && (
+        <div className="mt-4 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end">
         <button
           className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-          onClick={() => onStart(players)}
+          onClick={handleStart}
         >
           Start Game
         </button>
