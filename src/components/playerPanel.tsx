@@ -27,7 +27,9 @@ export default function PlayerPanel({ state }: { state: GameState }) {
                   title={p.name}
                   aria-label={`Color for ${p.name}`}
                 />
-                <span className="text-sm font-semibold truncate">
+                <span
+                  className="text-sm font-semibold truncate text-zinc-800"
+                >
                   {p.name} {p.bankrupt && '💀'}
                 </span>
               </div>
