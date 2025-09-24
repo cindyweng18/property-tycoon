@@ -3,8 +3,9 @@ import Board from './components/board';
 import Controls from './components/controls';
 import PlayerPanel from './components/playerPanel';
 import Setup from './components/setup';
+import LogPanel from './components/logPanel';
 import { initialState, reducer } from './games/engine';
-import type { GameState, Player } from './games/types';
+import type { Player } from './games/types';
 
 type SetupPlayer = { name: string; color: string; isBot: boolean };
 
@@ -58,11 +59,12 @@ function GameRuntime({
     <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-6 space-y-4 text-zinc-800">
       <h1 className="text-3xl font-extrabold text-center">Property Tycoon</h1>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="flex flex-col gap-4">
         <div className="bg-white/80 backdrop-blur rounded-xl shadow p-4">
           <PlayerPanel state={state} />
         </div>
-
+        <LogPanel entries={state.log} />
+      </div>
         <div className="col-span-2 bg-white/80 backdrop-blur rounded-xl shadow p-4 space-y-4">
           <Controls
             state={state}
@@ -72,13 +74,6 @@ function GameRuntime({
             onEnd={() => dispatch({ type: 'END_TURN' })}
           />
           <Board state={state} />
-
-          <div className="space-y-1">
-            <div className="text-sm font-semibold">Log</div>
-            {state.log.map((l, i) => (
-              <div key={i} className="text-xs text-zinc-700">• {l}</div>
-            ))}
-          </div>
 
           <div className="flex gap-2">
             <button
@@ -90,6 +85,5 @@ function GameRuntime({
           </div>
         </div>
       </div>
-    </div>
   );
 }
