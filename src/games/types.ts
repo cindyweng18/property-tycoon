@@ -7,14 +7,16 @@ export interface Tile {
   price?: number;
   rent?: number;
   ownerId?: number | null;
+  row: number; 
+  col: number; 
 }
 
 export interface Player {
   id: number;
   name: string;
-  position: number;    
+  position: number;
   cash: number;
-  inJailTurns: number; 
+  inJailTurns: number;
   bankrupt: boolean;
   color?: string;
   isBot?: boolean;
@@ -29,11 +31,6 @@ export interface GameState {
   dice: [number, number] | null;
   phase: Phase;
   log: string[];
-}
 
-export type Action =
-  | { type: 'ROLL' }
-  | { type: 'BUY' }
-  | { type: 'SKIP_BUY' }
-  | { type: 'END_TURN' }
-  | { type: 'RESET' };
+  boardSize: number;
+}
