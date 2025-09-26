@@ -34,3 +34,10 @@ export interface GameState {
 
   boardSize: number;
 }
+
+export type Action =
+  | { type: 'ROLL' }
+  | { type: 'BUY' }
+  | { type: 'SKIP_BUY' }
+  | { type: 'END_TURN' }
+  | { type: 'RESET' };

@@ -1,75 +1,125 @@
 import type { GameState } from '../games/types';
 
 export default function Board({ state }: { state: GameState }) {
-  const fallback = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b'];
-  const colorOf = (id: number) => state.players[id].color ?? fallback[id % fallback.length];
+  const { boardSize, tiles, players } = state;
+
+  const fallback = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4'];
+  const colorOf = (id: number) => players[id].color ?? fallback[id % fallback.length];
+  const byPos = new Map<string, typeof tiles[number]>();
+  tiles.forEach((t) => byPos.set(`${t.row},${t.col}`, t));
 
   return (
-    <div className="grid gap-3 md:gap-4"
-      style={{ gridTemplateColumns: `repeat(${state.tiles.length}, minmax(140px, 1fr))` }}
-    >
-      {state.tiles.map((t, idx) => {
-        const isProperty = t.type === 'PROPERTY';
-        const ownerId = (isProperty ? t.ownerId : null) ?? null;
-        const owned = ownerId !== null && ownerId !== undefined;
+    <div className="w-full flex justify-center">
+      <div
+        className="
+          relative aspect-square w-full
+          max-w-[520px] sm:max-w-[600px] md:max-w-[720px] lg:max-w-[850px] xl:max-w-[1000px]
+        "
+      >
+        <div
+          className="absolute inset-0 grid p-1 md:p-2 gap-1 md:gap-1.5 lg:gap-2"
+          style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}
+        >
+          {Array.from({ length: boardSize }).map((_, r) =>
+            Array.from({ length: boardSize }).map((__, c) => {
+              const tile = byPos.get(`${r},${c}`);
+              if (!tile) {
+                return (
+                  <div
+                    key={`${r},${c}`}
+                    className="rounded-lg bg-white/40"
+                    aria-hidden="true"
+                  />
+                );
+              }
 
-        const borderStyle: React.CSSProperties = owned
-          ? { borderColor: colorOf(ownerId), boxShadow: `0 0 0 1px ${colorOf(ownerId)}20` }
-          : {};
+              const isProperty = tile.type === 'PROPERTY';
+              const ownerId = (isProperty ? tile.ownerId : null) ?? null;
+              const owned = ownerId !== null && ownerId !== undefined;
 
-        const stripeStyle: React.CSSProperties = owned
-          ? { background: colorOf(ownerId) }
-          : { background: 'transparent' };
+              const occupants = players.filter(
+                (p) => p.position === tile.id && !p.bankrupt
+              );
 
-        const occupants = state.players.filter(p => p.position === idx && !p.bankrupt);
+              const borderStyle: React.CSSProperties = owned
+                ? {
+                    borderColor: colorOf(ownerId!),
+                    boxShadow: `0 0 0 1px ${colorOf(ownerId!)}20`,
+                  }
+                : {};
 
-        return (
-          <div
-            key={t.id}
-            className={[
-              'relative rounded-lg border bg-white/90 backdrop-blur p-3',
-              'shadow-sm transition-shadow',
-              owned ? 'border-2' : 'border-zinc-200',
-              'text-zinc-800',
-              'hover:shadow-md'
-            ].join(' ')}
-            style={borderStyle}
-            title={owned && isProperty ? `Owned by ${state.players[ownerId!].name}` : t.name}
-          >
-            <div
-              className="absolute left-0 top-0 h-1.5 w-full rounded-t-lg"
-              style={stripeStyle}
-              aria-hidden="true"
-            />
-            <div className="text-sm md:text-[15px] font-semibold truncate pr-12">{t.name}</div>
-            {isProperty && (
-              <div className="mt-1 text-xs md:text-[13px] text-zinc-600">
-                ${t.price} • Rent ${t.rent}{' '}
-                {owned ? (
-                  <span className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[11px]"
-                        style={{ background: `${colorOf(ownerId!)}15`, color: colorOf(ownerId!) }}>
-                    ● Owned by {state.players[ownerId!].name}
-                  </span>
-                ) : (
-                  <span className="ml-1 text-[11px] text-zinc-500">Unowned</span>
-                )}
-              </div>
-            )}
+              const stripeStyle: React.CSSProperties = owned
+                ? { background: colorOf(ownerId!) }
+                : { background: 'transparent' };
 
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {occupants.map(p => (
+              return (
                 <div
-                  key={p.id}
-                  className="h-4 w-4 rounded-full ring-2 ring-white/80"
-                  style={{ background: colorOf(p.id) }}
-                  title={p.name}
-                  aria-label={`${p.name} token`}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+                  key={`${r},${c}`}
+                  className={[
+                    'relative rounded-lg border bg-white/90 backdrop-blur p-2 md:p-3',
+                    owned ? 'border-2' : 'border-zinc-200',
+                    'text-zinc-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden',
+                  ].join(' ')}
+                  style={borderStyle}
+                  title={
+                    owned && isProperty
+                      ? `Owned by ${players[ownerId!].name}`
+                      : tile.name
+                  }
+                >
+                  <div
+                    className="absolute left-0 top-0 h-1.5 w-full rounded-t-lg"
+                    style={stripeStyle}
+                    aria-hidden="true"
+                  />
+                  <div className="text-[10px] sm:text-xs md:text-sm font-semibold truncate pr-10">
+                    {tile.name}
+                  </div>
+
+                  {isProperty ? (
+                    <div className="mt-1 text-[10px] sm:text-[11px] md:text-xs text-zinc-600">
+                      ${tile.price} • Rent ${tile.rent}{' '}
+                      {owned ? (
+                        <span
+                          className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px]"
+                          style={{
+                            background: `${colorOf(ownerId!)}15`,
+                            color: colorOf(ownerId!),
+                          }}
+                        >
+                          ● {players[ownerId!].name}
+                        </span>
+                      ) : (
+                        <span className="ml-1 text-[10px] text-zinc-500">Unowned</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-[10px] sm:text-[11px] md:text-xs text-zinc-600">
+                      {tile.type === 'GO' && 'Collect $200 when passing'}
+                      {tile.type === 'JAIL' && 'Just visiting'}
+                      {tile.type === 'FREE' && 'Free Parking'}
+                      {tile.type === 'GO_TO_JAIL' && 'Go directly to Jail'}
+                      {tile.type === 'TAX' && 'Pay tax'}
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {occupants.map((p) => (
+                      <div
+                        key={p.id}
+                        className="h-3.5 w-3.5 md:h-4 md:w-4 rounded-full ring-2 ring-white/80"
+                        style={{ background: colorOf(p.id) }}
+                        title={p.name}
+                        aria-label={`${p.name} token`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

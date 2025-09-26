@@ -1,8 +1,8 @@
 import type { Action, GameState, Player, Tile, Phase } from './types';
-import { makeTiles } from './tiles';
+import { makeSquareBoard } from './tiles';
 
 const startCash = 1500;
-const passGoAmount = 100;
+const passGoAmount = 200;
 
 type InitInput = string[] | Array<Partial<Player> & { name: string }>;
 
@@ -15,46 +15,59 @@ const nextAlive = (gs: GameState, idx: number): number => {
   return idx;
 };
 
-const movePlayer = (player: Player, steps: number, tiles: Tile[]): { newPos: number; passedGo: boolean } => {
+const movePlayer = (
+  player: Player,
+  steps: number,
+  tiles: Tile[]
+): { newPos: number; passedGo: boolean } => {
   const old = player.position;
   const size = tiles.length;
-  const newPos = (old + steps) % size;
-  const passedGo = old + steps >= size;
+  const raw = old + steps;
+  const newPos = raw % size;
+  const passedGo = raw >= size;
   return { newPos, passedGo };
 };
 
 const pay = (p: Player, amount: number): void => { p.cash -= amount; };
 const credit = (p: Player, amount: number): void => { p.cash += amount; };
-const goToJail = (p: Player): void => { p.position = 4; p.inJailTurns = 1; };
-const log = (gs: GameState, msg: string) => { gs.log = [msg, ...gs.log].slice(0, 50); };
 
-export const initialState = (players: InitInput = ['Alice','Bob']): GameState => {
-  const normalized: Player[] = (Array.isArray(players) ? players : []).map((p, i) => {
-    if (typeof p === 'string') {
-      return { id: i, name: p, position: 0, cash: startCash, inJailTurns: 0, bankrupt: false };
-    }
-    return {
+const sendToJail = (gs: GameState, p: Player): void => {
+  const jailIdx = gs.tiles.findIndex(t => t.type === 'JAIL');
+  p.position = jailIdx >= 0 ? jailIdx : p.position;
+  p.inJailTurns = 1;
+};
+
+const log = (gs: GameState, msg: string) => {
+  gs.log = [msg, ...gs.log].slice(0, 50);
+};
+
+export const initialState = (players: InitInput = ['You', 'Bot']): GameState => {
+  const boardSize = 11; 
+  const tiles = makeSquareBoard(boardSize);
+
+  const normalized: Player[] = (players as Array<Partial<Player> & { name: string }>)
+    .map((p, i) => ({
       id: i,
-      name: p.name,
-      position: 0,
+      name: typeof p === 'string' ? (p as unknown as string) : p.name,
+      position: 0, 
       cash: startCash,
       inJailTurns: 0,
       bankrupt: false,
-      color: p.color ?? undefined,
-      isBot: !!p.isBot,
-    };
-  });
+      color: (p as Player).color ?? undefined,
+      isBot: !!(p as Player).isBot,
+    }));
 
   return {
-    tiles: makeTiles(),
+    tiles,
     players: normalized.length ? normalized : [
-      { id: 0, name: 'Alice', position: 0, cash: startCash, inJailTurns: 0, bankrupt: false },
-      { id: 1, name: 'Bob',   position: 0, cash: startCash, inJailTurns: 0, bankrupt: false },
+      { id: 0, name: 'You', position: 0, cash: startCash, inJailTurns: 0, bankrupt: false },
+      { id: 1, name: 'Bot', position: 0, cash: startCash, inJailTurns: 0, bankrupt: false, isBot: true },
     ],
     currentPlayer: 0,
     dice: null,
-    phase: 'idle' as Phase,
+    phase: 'idle',
     log: ['Game started'],
+    boardSize,
   };
 };
 
@@ -62,27 +75,32 @@ const resolveLanding = (gs: GameState, p: Player, tile: Tile) => {
   switch (tile.type) {
     case 'GO':
       break;
-    case 'PROPERTY':
+
+    case 'PROPERTY': {
       if (tile.ownerId == null) {
         gs.phase = 'buy_prompt';
         log(gs, `${p.name} landed on ${tile.name} — available for $${tile.price}`);
       } else if (tile.ownerId !== p.id) {
         const owner = gs.players[tile.ownerId];
-        if (!owner.bankrupt) {
-          pay(p, tile.rent!);
-          credit(owner, tile.rent!);
+        if (!owner.bankrupt && tile.rent != null) {
+          pay(p, tile.rent);
+          credit(owner, tile.rent);
           log(gs, `${p.name} paid $${tile.rent} rent to ${owner.name} for ${tile.name}`);
         }
       }
       break;
+    }
+
     case 'TAX':
       pay(p, 100);
       log(gs, `${p.name} paid $100 tax`);
       break;
+
     case 'GO_TO_JAIL':
-      goToJail(p);
+      sendToJail(gs, p);
       log(gs, `${p.name} is sent to Jail`);
       break;
+
     case 'JAIL':
     case 'FREE':
       break;
@@ -101,26 +119,26 @@ export const reducer = (gs: GameState, action: Action): GameState => {
     players: gs.players.map(p => ({ ...p })),
     tiles: gs.tiles.map(t => ({ ...t })),
     log: [...gs.log],
-    phase: gs.phase as Phase
+    phase: gs.phase as Phase,
   };
 
   const current = gs.players[gs.currentPlayer];
 
-
   if (current.bankrupt) {
     gs.currentPlayer = nextAlive(gs, gs.currentPlayer);
     gs.phase = 'idle';
+    gs.dice = null;
     return gs;
   }
 
   switch (action.type) {
     case 'ROLL': {
       if (gs.phase !== 'idle') return gs;
-
       if (current.inJailTurns > 0) {
         current.inJailTurns -= 1;
         log(gs, `${current.name} is in Jail (skip move)`);
         gs.phase = 'end';
+        gs.dice = null;
         return gs;
       }
 
@@ -146,10 +164,17 @@ export const reducer = (gs: GameState, action: Action): GameState => {
     case 'BUY': {
       if (gs.phase !== 'buy_prompt') return gs;
       const tile = gs.tiles[current.position];
-      if (tile.type === 'PROPERTY' && tile.ownerId == null && current.cash >= (tile.price || 0)) {
-        pay(current, tile.price!);
+      if (
+        tile.type === 'PROPERTY' &&
+        tile.ownerId == null &&
+        tile.price != null &&
+        current.cash >= tile.price
+      ) {
+        pay(current, tile.price);
         tile.ownerId = current.id;
         log(gs, `${current.name} bought ${tile.name} for $${tile.price}`);
+      } else {
+        log(gs, `${current.name} could not buy ${tile.name}`);
       }
       gs.phase = 'end';
       return gs;
@@ -169,8 +194,11 @@ export const reducer = (gs: GameState, action: Action): GameState => {
       return gs;
     }
 
-    case 'RESET':
+    case 'RESET': {
       return initialState(gs.players.map(p => p.name));
+    }
+
+    default:
+      return gs;
   }
-  return gs;
 };
