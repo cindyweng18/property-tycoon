@@ -42,7 +42,7 @@ const log = (gs: GameState, msg: string) => {
 };
 
 export const initialState = (players: InitInput = ['You', 'Bot']): GameState => {
-  const boardSize = 11; 
+  const boardSize = 6; 
   const tiles = makeSquareBoard(boardSize);
 
   const normalized: Player[] = (players as Array<Partial<Player> & { name: string }>)

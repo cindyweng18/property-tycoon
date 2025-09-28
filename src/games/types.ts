@@ -31,7 +31,6 @@ export interface GameState {
   dice: [number, number] | null;
   phase: Phase;
   log: string[];
-
   boardSize: number;
 }
 
