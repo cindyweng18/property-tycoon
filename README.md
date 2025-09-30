@@ -1,6 +1,34 @@
-# React + TypeScript + Vite
+# 🎲 Monopoly Clone
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simplified recreation of the classic Monopoly board game built with **React**, **TypeScript**, and **Tailwind CSS**.  
+This project is a work-in-progress and aims to bring the fun of Monopoly into a modern web application.
+
+---
+
+## 🚀 Features (in progress)
+- Interactive Monopoly board
+- Player turns and dice rolling
+- Buying properties and handling money
+- Responsive design with Tailwind CSS
+- Written in React + TypeScript for scalability
+
+---
+
+## 🛠️ Tech Stack
+- **React** – Frontend library for building UI
+- **TypeScript** – Type safety and maintainability
+- **Tailwind CSS** – Styling with utility-first classes
+
+---
+
+## 📦 Getting Started
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/your-username/monopoly-clone.git
+cd monopoly-clone
+npm install
+npm run dev
 
 Currently, two official plugins are available:
 
