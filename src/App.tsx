@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import PlayerPanel from './components/playerPanel';
 import LogPanel from './components/logPanel';
 import Controls from './components/controls';
@@ -12,44 +12,84 @@ export default function App() {
     undefined as unknown as GameState,
     () =>
       initialState([
-        { name: 'You', color: '#3b82f6', isBot: false },
-        { name: 'Player 2', color: '#ef4444', isBot: true },
+        { name: 'You',      color: '#3b82f6', isBot: false },
+        { name: 'Player 2', color: '#ef4444', isBot: true  },
       ])
   );
 
+  const botBusyRef = useRef(false);
+  const timersRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(id => clearTimeout(id));
+      timersRef.current = [];
+      botBusyRef.current = false;
+    };
+  }, []);
+
+
   useEffect(() => {
     const cp = state.players[state.currentPlayer];
-    if (!cp?.isBot || cp.bankrupt) return;
+    const inputPhase =
+      state.phase === 'idle' || state.phase === 'buy_prompt' || state.phase === 'end';
 
-    const t = setTimeout(() => {
-      dispatch({ type: 'ROLL' });
-      setTimeout(() => {
+    if (!cp?.isBot || cp.bankrupt || !inputPhase || botBusyRef.current) return;
+
+    botBusyRef.current = true;
+    const after = (ms: number, fn: () => void) => {
+      const id = window.setTimeout(fn, ms);
+      timersRef.current.push(id);
+    };
+
+    if (state.phase === 'idle') {
+      after(300, () => dispatch({ type: 'ROLL' }));
+    } else if (state.phase === 'buy_prompt') {
+      after(280, () => dispatch({ type: 'BUY' }));
+    } else if (state.phase === 'end') {
+      after(240, () => {
+        dispatch({ type: 'END_TURN' });
+        botBusyRef.current = false;
+        timersRef.current.forEach(id => clearTimeout(id));
+        timersRef.current = [];
+      });
+      return; 
+    }
+
+    after(1000, () => {
+      const stillBot = state.players[state.currentPlayer]?.isBot;
+      if (stillBot) {
         if (state.phase === 'buy_prompt') {
           dispatch({ type: 'BUY' });
-        }
-        setTimeout(() => {
+          after(250, () => dispatch({ type: 'END_TURN' }));
+        } else if (state.phase === 'end') {
           dispatch({ type: 'END_TURN' });
-        }, 300);
-      }, 350);
-    }, 400);
+        }
+      }
+      botBusyRef.current = false;
+      timersRef.current.forEach(id => clearTimeout(id));
+      timersRef.current = [];
+    });
 
-    return () => clearTimeout(t);
-  }, [state.currentPlayer, state.players, state.phase]);
+    return () => {
+      timersRef.current.forEach(id => clearTimeout(id));
+      timersRef.current = [];
+      botBusyRef.current = false;
+    };
+  }, [state.currentPlayer, state.phase, state.players]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-4 sm:p-6 text-zinc-800">
       <h1 className="text-4xl font-extrabold mb-4">Property Tycoon</h1>
-
-      <div className="mx-auto max-w-[1500px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
-
+      <div className="mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
         <div className="flex flex-col gap-4">
-          <div className="bg-white/80 backdrop-blur rounded-xl shadow p-4">
+          <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
             <PlayerPanel state={state} />
           </div>
           <LogPanel entries={state.log} />
         </div>
 
-        <div className="bg-white/80 backdrop-blur rounded-xl shadow p-4 space-y-4">
+        <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
           <Controls
             state={state}
             onRoll={() => dispatch({ type: 'ROLL' })}
