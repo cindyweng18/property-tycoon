@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react';
 
 export default function LogPanel({ entries }: { entries: string[] }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    el.scrollTop = 0;
   }, [entries]);
 
   return (
@@ -20,7 +21,9 @@ export default function LogPanel({ entries }: { entries: string[] }) {
           <div className="text-sm text-zinc-500">No events yet.</div>
         ) : (
           entries.map((line, i) => (
-            <div key={i} className="text-xs md:text-sm text-zinc-700">• {line}</div>
+            <div key={i} className="text-xs md:text-sm text-zinc-700">
+              • {line}
+            </div>
           ))
         )}
       </div>
