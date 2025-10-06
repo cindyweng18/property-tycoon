@@ -1,115 +1,121 @@
-import { useEffect, useReducer, useRef } from 'react';
+import { useState } from 'react';
 import PlayerPanel from './components/playerPanel';
 import LogPanel from './components/logPanel';
 import Controls from './components/controls';
 import Board from './components/board';
-import { initialState, reducer } from './games/engine';
-import type { GameState } from './games/types';
+import GameArea from './components/gameArea'; 
+import type { Player } from './games/types';
 
 export default function App() {
-  const [state, dispatch] = useReducer(
-    reducer,
-    undefined as unknown as GameState,
-    () =>
-      initialState([
-        { name: 'You',      color: '#3b82f6', isBot: false },
-        { name: 'Player 2', color: '#ef4444', isBot: true  },
-      ])
-  );
+  const [setupPlayers, setSetupPlayers] = useState<
+    Array<Pick<Player, 'name' | 'color' | 'isBot'>>
+  >([{ name: 'You', color: '#3b82f6', isBot: false }]);
 
-  const botBusyRef = useRef(false);
-  const timersRef = useRef<number[]>([]);
+  const [started, setStarted] = useState(false);
+  const canAdd = setupPlayers.length < 4;
+  const addPlayer = () => {
+    if (!canAdd) return;
+    const idx = setupPlayers.length + 1;
+    const palette = ['#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4'];
+    setSetupPlayers((prev) => [
+      ...prev,
+      { name: `Player ${idx}`, color: palette[(idx - 1) % palette.length], isBot: false },
+    ]);
+  };
 
-  useEffect(() => {
-    return () => {
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-      botBusyRef.current = false;
-    };
-  }, []);
-
-
-  useEffect(() => {
-    const cp = state.players[state.currentPlayer];
-    const inputPhase =
-      state.phase === 'idle' || state.phase === 'buy_prompt' || state.phase === 'end';
-
-    if (!cp?.isBot || cp.bankrupt || !inputPhase || botBusyRef.current) return;
-
-    botBusyRef.current = true;
-    const after = (ms: number, fn: () => void) => {
-      const id = window.setTimeout(fn, ms);
-      timersRef.current.push(id);
-    };
-
-    if (state.phase === 'idle') {
-      after(300, () => dispatch({ type: 'ROLL' }));
-    } else if (state.phase === 'buy_prompt') {
-      after(280, () => dispatch({ type: 'BUY' }));
-    } else if (state.phase === 'end') {
-      after(240, () => {
-        dispatch({ type: 'END_TURN' });
-        botBusyRef.current = false;
-        timersRef.current.forEach(id => clearTimeout(id));
-        timersRef.current = [];
-      });
-      return; 
-    }
-
-    after(1000, () => {
-      const stillBot = state.players[state.currentPlayer]?.isBot;
-      if (stillBot) {
-        if (state.phase === 'buy_prompt') {
-          dispatch({ type: 'BUY' });
-          after(250, () => dispatch({ type: 'END_TURN' }));
-        } else if (state.phase === 'end') {
-          dispatch({ type: 'END_TURN' });
-        }
-      }
-      botBusyRef.current = false;
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-    });
-
-    return () => {
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-      botBusyRef.current = false;
-    };
-  }, [state.currentPlayer, state.phase, state.players]);
+  const onStart = () => {
+    if (setupPlayers.length === 0) return;
+    setStarted(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-4 sm:p-6 text-zinc-800">
-      <h1 className="text-4xl font-extrabold mb-4">Property Tycoon</h1>
-      <div className="mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
-        <div className="flex flex-col gap-4">
-          <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
-            <PlayerPanel state={state} />
+      <h1 className="text-4xl font-extrabold mb-4 text-center">Property Tycoon</h1>
+
+      {!started && (
+        <div className="mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
+          <div className="flex flex-col gap-4">
+            <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
+              <PlayerPanel
+                started={false}
+                setupPlayers={setupPlayers}
+                onChangeSetup={setSetupPlayers}
+                onAddPlayer={addPlayer}
+                canAdd={canAdd}
+              />
+            </div>
+
+            <div className="bg-white/70 backdrop-blur rounded-xl shadow p-4 text-zinc-600">
+              <div className="text-lg font-semibold mb-1">Game Log</div>
+              <div className="text-sm">
+                Logs will appear here after you press <b>Start</b>.
+              </div>
+            </div>
           </div>
-          <LogPanel entries={state.log} />
-        </div>
 
-        <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
-          <Controls
-            state={state}
-            onRoll={() => dispatch({ type: 'ROLL' })}
-            onBuy={() => dispatch({ type: 'BUY' })}
-            onSkip={() => dispatch({ type: 'SKIP_BUY' })}
-            onEnd={() => dispatch({ type: 'END_TURN' })}
-          />
+          <div className="relative bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
+            <div className="opacity-60 pointer-events-none">
+              <div className="mb-3 text-sm text-zinc-600">
+                Set up players on the left, then press Start.
+              </div>
+              <div className="flex justify-center">
+                <div className="aspect-square w-full max-w-[600px] bg-zinc-100 rounded-lg border border-zinc-300" />
+              </div>
+            </div>
 
-          <div className="flex justify-center">
-            <Board state={state} />
+            <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[2px] rounded-xl grid place-items-center">
+              <button
+                onClick={onStart}
+                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+              >
+                Start Game
+              </button>
+            </div>
           </div>
-
-          <button
-            className="px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50 transition"
-            onClick={() => window.location.reload()}
-          >
-            Restart
-          </button>
         </div>
-      </div>
+      )}
+
+      {started && (
+        <GameArea initialPlayers={setupPlayers}>
+          {({ state, dispatch }) => (
+            <div className="mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
+              <div className="flex flex-col gap-4">
+                <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
+                  <PlayerPanel
+                    started
+                    setupPlayers={setupPlayers}
+                    onChangeSetup={setSetupPlayers}
+                    onAddPlayer={addPlayer}
+                    canAdd={false}
+                  />
+                </div>
+                <LogPanel entries={state.log} />
+              </div>
+
+              <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
+                <Controls
+                  state={state}
+                  onRoll={() => dispatch({ type: 'ROLL' })}
+                  onBuy={() => dispatch({ type: 'BUY' })}
+                  onSkip={() => dispatch({ type: 'SKIP_BUY' })}
+                  onEnd={() => dispatch({ type: 'END_TURN' })}
+                />
+
+                <div className="flex justify-center">
+                  <Board state={state} />
+                </div>
+
+                <button
+                  className="px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50 transition"
+                  onClick={() => window.location.reload()}
+                >
+                  Restart
+                </button>
+              </div>
+            </div>
+          )}
+        </GameArea>
+      )}
     </div>
   );
 }
