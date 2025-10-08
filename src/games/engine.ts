@@ -194,9 +194,15 @@ export const reducer = (gs: GameState, action: Action): GameState => {
       return gs;
     }
 
-    case 'RESET': {
-      return initialState(gs.players.map(p => p.name));
-    }
+    case 'RESET':
+      return initialState(
+        gs.players.map(p => ({
+          name: p.name,
+          color: p.color,
+          isBot: p.isBot,
+    }))
+    );
+
 
     default:
       return gs;
