@@ -78,7 +78,7 @@ export default function App() {
 
       {started && (
         <GameArea initialPlayers={setupPlayers}>
-          {({ state, dispatch }) => (
+          {({ state, dispatch, rolling, onRollRequest }) => (
             <div className="relative mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
               <div className="flex flex-col gap-4">
                 <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
@@ -87,8 +87,7 @@ export default function App() {
                     setupPlayers={setupPlayers}
                     onChangeSetup={setSetupPlayers}
                     onAddPlayer={() => {}}
-                    canAdd={false}
-                  />
+                    canAdd={false} />
                 </div>
                 <LogPanel entries={state.log} />
               </div>
@@ -97,18 +96,17 @@ export default function App() {
                 <button
                   onClick={() => setShowRestart(true)}
                   className="absolute top-3 right-3 px-3 py-1.5 rounded-md border border-zinc-300 bg-white/80 hover:bg-zinc-50 text-sm font-medium shadow-sm transition"
-                  aria-label="Restart"
-                >
+                  aria-label="Restart" >
                   Restart
                 </button>
 
-                <Controls
-                  state={state}
-                  onRoll={() => dispatch({ type: 'ROLL' })}
-                  onBuy={() => dispatch({ type: 'BUY' })}
-                  onSkip={() => dispatch({ type: 'SKIP_BUY' })}
-                  onEnd={() => dispatch({ type: 'END_TURN' })}
-                />
+              <Controls
+                state={state}
+                rolling={rolling}
+                onRollRequest={onRollRequest}
+                onBuy={() => dispatch({ type: 'BUY' })}
+                onSkip={() => dispatch({ type: 'SKIP_BUY' })}
+                onEnd={() => dispatch({ type: 'END_TURN' })} />
 
                 <div className="flex justify-center">
                   <Board state={state} />

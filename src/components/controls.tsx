@@ -1,32 +1,23 @@
-import { useState } from "react";
 import type { GameState } from "../games/types";
 import GameButton from "./gamebutton";
 import DicePair from "./dice";
 
 export default function Controls({
   state,
-  onRoll,
+  rolling,
+  onRollRequest,
   onBuy,
   onSkip,
   onEnd,
 }: {
   state: GameState;
-  onRoll: () => void;
+  rolling: boolean;
+  onRollRequest: () => void;
   onBuy: () => void;
   onSkip: () => void;
   onEnd: () => void;
 }) {
   const cp = state.players[state.currentPlayer];
-  const [rolling, setRolling] = useState(false);
-
-  const handleRoll = () => {
-    if (state.phase !== "idle" || rolling) return;
-    setRolling(true);
-    setTimeout(() => {
-      onRoll(); 
-      setTimeout(() => setRolling(false), 600);
-    }, 400);
-  };
 
   return (
     <div className="space-y-3">
@@ -41,7 +32,7 @@ export default function Controls({
 
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex flex-wrap gap-2">
-          <GameButton disabled={state.phase !== "idle" || rolling} onClick={handleRoll}>
+          <GameButton disabled={state.phase !== "idle" || rolling} onClick={onRollRequest}>
             Roll
           </GameButton>
           <GameButton disabled={state.phase !== "buy_prompt" || rolling} onClick={onBuy}>

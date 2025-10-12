@@ -1,75 +1,51 @@
-import React, { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useMemo, useState, useReducer } from 'react';
 import { initialState, reducer } from '../games/engine';
 import type { GameState, Player } from '../games/types';
 
-export default function GameArea({
-  initialPlayers,
-  children,
-}: {
+type Props = {
   initialPlayers: Array<Pick<Player, 'name' | 'color' | 'isBot'>>;
-  children: (ctx: { state: GameState; dispatch: React.Dispatch<any> }) => React.ReactNode;
-}) {
-  const [state, dispatch] = useReducer(
-    reducer,
-    undefined as unknown as GameState,
-    () => initialState(initialPlayers)
-  );
-  const busyRef = useRef(false);
-  const timersRef = useRef<number[]>([]);
+  children: (args: {
+    state: GameState;
+    dispatch: React.Dispatch<any>;
+    rolling: boolean;
+    onRollRequest: () => void;
+  }) => React.ReactNode;
+};
 
-  useEffect(() => {
-    return () => {
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-      busyRef.current = false;
-    };
-  }, []);
+export default function GameArea({ initialPlayers, children }: Props) {
+  const init = useMemo(() => initialState(initialPlayers), [initialPlayers]);
+  const [state, dispatch] = useReducer(reducer, init);
+  const [rolling, setRolling] = useState(false);
+  const onRollRequest = () => {
+    if (state.phase !== 'idle' || rolling) return;
+    setRolling(true);
+    setTimeout(() => {
+      dispatch({ type: 'ROLL' }); 
+      setTimeout(() => setRolling(false), 600);
+    }, 400);
+  };
 
   useEffect(() => {
     const cp = state.players[state.currentPlayer];
-    const inputPhase = state.phase === 'idle' || state.phase === 'buy_prompt' || state.phase === 'end';
-    if (!cp?.isBot || cp.bankrupt || !inputPhase || busyRef.current) return;
+    if (!cp?.isBot || cp.bankrupt || rolling) return;
+    if (state.phase !== 'idle') return;
 
-    busyRef.current = true;
-    const after = (ms: number, fn: () => void) => {
-      const id = window.setTimeout(fn, ms);
-      timersRef.current.push(id);
-    };
-
-    if (state.phase === 'idle') {
-      after(300, () => dispatch({ type: 'ROLL' }));
-    } else if (state.phase === 'buy_prompt') {
-      after(280, () => dispatch({ type: 'BUY' }));
-    } else if (state.phase === 'end') {
-      after(240, () => {
-        dispatch({ type: 'END_TURN' });
-        busyRef.current = false;
-        timersRef.current.forEach(id => clearTimeout(id));
-        timersRef.current = [];
-      });
-      return;
-    }
-
-    after(1000, () => {
-      const stillBot = state.players[state.currentPlayer]?.isBot;
-      if (stillBot) {
+    const t1 = setTimeout(() => {
+      onRollRequest();
+      const t2 = setTimeout(() => {
         if (state.phase === 'buy_prompt') {
           dispatch({ type: 'BUY' });
-          after(250, () => dispatch({ type: 'END_TURN' }));
-        } else if (state.phase === 'end') {
-          dispatch({ type: 'END_TURN' });
         }
-      }
-      busyRef.current = false;
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-    });
+        const t3 = setTimeout(() => {
+          dispatch({ type: 'END_TURN' });
+        }, 350);
+        return () => clearTimeout(t3);
+      }, 700); 
+      return () => clearTimeout(t2);
+    }, 450);
 
-    return () => {
-      timersRef.current.forEach(id => clearTimeout(id));
-      timersRef.current = [];
-      busyRef.current = false;
-    };
-  }, [state.currentPlayer, state.phase, state.players]);
-  return <>{children({ state, dispatch })}</>;
+    return () => clearTimeout(t1);
+  }, [state.currentPlayer, state.phase, state.players, rolling]);
+
+  return <>{children({ state, dispatch, rolling, onRollRequest })}</>;
 }
