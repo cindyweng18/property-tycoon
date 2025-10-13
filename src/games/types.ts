@@ -7,8 +7,8 @@ export interface Tile {
   price?: number;
   rent?: number;
   ownerId?: number | null;
-  row: number; 
-  col: number; 
+  row: number;
+  col: number;
 }
 
 export interface Player {
@@ -16,13 +16,19 @@ export interface Player {
   name: string;
   position: number;
   cash: number;
-  inJailTurns: number;
+  inJailTurns: number;       
   bankrupt: boolean;
   color?: string;
   isBot?: boolean;
+  getOutCards?: number;   
 }
 
-export type Phase = 'idle' | 'buy_prompt' | 'end';
+export type Phase =
+  | 'idle'
+  | 'buy_prompt'
+  | 'end'
+  | 'jail_choice'              
+  | 'jail_rolling';             
 
 export interface GameState {
   tiles: Tile[];
@@ -39,4 +45,7 @@ export type Action =
   | { type: 'BUY' }
   | { type: 'SKIP_BUY' }
   | { type: 'END_TURN' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'JAIL_PAY' }
+  | { type: 'JAIL_ROLL' }
+  | { type: 'JAIL_USE_CARD' };
