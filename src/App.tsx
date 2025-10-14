@@ -106,7 +106,11 @@ export default function App() {
                 onRollRequest={onRollRequest}
                 onBuy={() => dispatch({ type: 'BUY' })}
                 onSkip={() => dispatch({ type: 'SKIP_BUY' })}
-                onEnd={() => dispatch({ type: 'END_TURN' })} />
+                onEnd={() => dispatch({ type: 'END_TURN' })}
+                onJailRoll={() => dispatch({ type: 'JAIL_ROLL' })}
+                onJailPay={() => dispatch({ type: 'JAIL_PAY' })}
+                onJailUseCard={() => dispatch({ type: 'JAIL_USE_CARD' })}/>
+
 
                 <div className="flex justify-center">
                   <Board state={state} />
