@@ -26,26 +26,33 @@ export default function GameArea({ initialPlayers, children }: Props) {
   };
 
   useEffect(() => {
-    const cp = state.players[state.currentPlayer];
-    if (!cp?.isBot || cp.bankrupt || rolling) return;
-    if (state.phase !== 'idle') return;
+  const cp = state.players[state.currentPlayer];
+  if (!cp?.isBot || cp.bankrupt) return;
 
-    const t1 = setTimeout(() => {
-      onRollRequest();
-      const t2 = setTimeout(() => {
-        if (state.phase === 'buy_prompt') {
-          dispatch({ type: 'BUY' });
-        }
-        const t3 = setTimeout(() => {
-          dispatch({ type: 'END_TURN' });
-        }, 350);
-        return () => clearTimeout(t3);
-      }, 700); 
-      return () => clearTimeout(t2);
-    }, 450);
+  const takeTurn = () => {
 
-    return () => clearTimeout(t1);
-  }, [state.currentPlayer, state.phase, state.players, rolling]);
+    if (state.phase === 'jail_choice') {
+      if (cp.inJailTurns > 1) {
+        dispatch({ type: 'JAIL_ROLL' });
+      } else {
+        dispatch({ type: 'JAIL_PAY' });
+      }
+      setTimeout(() => dispatch({ type: 'END_TURN' }), 800);
+      return;
+    }
+
+    if (state.phase === 'idle') {
+      dispatch({ type: 'ROLL' });
+      setTimeout(() => {
+        if (state.phase === 'buy_prompt') dispatch({ type: 'BUY' });
+        setTimeout(() => dispatch({ type: 'END_TURN' }), 500);
+      }, 600);
+    }
+  };
+
+  const timer = setTimeout(takeTurn, 600);
+  return () => clearTimeout(timer);
+}, [state.currentPlayer, state.phase, state.players]);
 
   return <>{children({ state, dispatch, rolling, onRollRequest })}</>;
 }
