@@ -3,7 +3,7 @@ import PlayerPanel from './components/playerPanel';
 import LogPanel from './components/logPanel';
 import Controls from './components/controls';
 import Board from './components/board';
-import GameArea from './components/gameArea'; 
+import GameArea from './components/gameArea';
 import RestartDialog from './components/restartDialog';
 import type { Player } from './games/types';
 
@@ -14,6 +14,7 @@ export default function App() {
 
   const [started, setStarted] = useState(false);
   const [showRestart, setShowRestart] = useState(false);
+
   const canAdd = setupPlayers.length < 4;
   const addPlayer = () => {
     if (!canAdd) return;
@@ -33,6 +34,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-200 to-indigo-300 p-4 sm:p-6 text-zinc-800">
       <h1 className="text-4xl font-extrabold mb-4 text-center">Property Tycoon</h1>
+
       {!started && (
         <div className="mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
           <div className="flex flex-col gap-4">
@@ -42,8 +44,7 @@ export default function App() {
                 setupPlayers={setupPlayers}
                 onChangeSetup={setSetupPlayers}
                 onAddPlayer={addPlayer}
-                canAdd={canAdd}
-              />
+                canAdd={canAdd}/>
             </div>
 
             <div className="bg-white/70 backdrop-blur rounded-xl shadow p-4 text-zinc-600">
@@ -67,8 +68,7 @@ export default function App() {
             <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[2px] rounded-xl grid place-items-center">
               <button
                 onClick={onStart}
-                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-              >
+                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition" >
                 Start Game
               </button>
             </div>
@@ -78,59 +78,65 @@ export default function App() {
 
       {started && (
         <GameArea initialPlayers={setupPlayers}>
-          {({ state, dispatch, rolling, onRollRequest }) => (
-            <div className="relative mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
-              <div className="flex flex-col gap-4">
-                <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
-                  <PlayerPanel
-                    started
-                    setupPlayers={setupPlayers}
-                    onChangeSetup={setSetupPlayers}
-                    onAddPlayer={() => {}}
-                    canAdd={false} />
-                </div>
-                <LogPanel entries={state.log} />
-              </div>
+          {({ state, dispatch, rolling, onRollRequest }) => {
+            const current = state.players[state.currentPlayer];
+            const canAct = !current.isBot && !current.bankrupt;
 
-              <div className="relative bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
-                <button
-                  onClick={() => setShowRestart(true)}
-                  className="absolute top-3 right-3 px-3 py-1.5 rounded-md border border-zinc-300 bg-white/80 hover:bg-zinc-50 text-sm font-medium shadow-sm transition"
-                  aria-label="Restart" >
-                  Restart
-                </button>
-
-              <Controls
-                state={state}
-                rolling={rolling}
-                onRollRequest={onRollRequest}
-                onBuy={() => dispatch({ type: 'BUY' })}
-                onSkip={() => dispatch({ type: 'SKIP_BUY' })}
-                onEnd={() => dispatch({ type: 'END_TURN' })}
-                onJailRoll={() => dispatch({ type: 'JAIL_ROLL' })}
-                onJailPay={() => dispatch({ type: 'JAIL_PAY' })}
-                onJailUseCard={() => dispatch({ type: 'JAIL_USE_CARD' })}/>
-
-
-                <div className="flex justify-center">
-                  <Board state={state} />
+            return (
+              <div className="relative mx-auto max-w-[1600px] grid grid-cols-1 sm:grid-cols-[360px_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
+                <div className="flex flex-col gap-4">
+                  <div className="bg-white/90 backdrop-blur rounded-xl shadow p-4">
+                    <PlayerPanel
+                      started
+                      setupPlayers={setupPlayers}
+                      onChangeSetup={setSetupPlayers}
+                      onAddPlayer={() => {}}
+                      canAdd={false}/>
+                  </div>
+                  <LogPanel entries={state.log} />
                 </div>
 
-                <RestartDialog
-                  open={showRestart}
-                  onClose={() => setShowRestart(false)}
-                  onSoft={() => {
-                    dispatch({ type: 'RESET' });
-                    setShowRestart(false);
-                  }}
-                  onHard={() => {
-                    setShowRestart(false);
-                    setStarted(false);
-                  }}
-                />
+                <div className="relative bg-white/90 backdrop-blur rounded-xl shadow p-4 space-y-4">
+                  <button
+                    onClick={() => setShowRestart(true)}
+                    className="absolute top-3 right-3 px-3 py-1.5 rounded-md border border-zinc-300 bg-white/80 hover:bg-zinc-50 text-sm font-medium shadow-sm transition"
+                    aria-label="Restart">
+                    Restart
+                  </button>
+
+                  <Controls
+                    state={state}
+                    rolling={rolling}
+                    canAct={canAct}              
+                    onRollRequest={onRollRequest}
+                    onBuy={() => dispatch({ type: 'BUY' })}
+                    onSkip={() => dispatch({ type: 'SKIP_BUY' })}
+                    onEnd={() => dispatch({ type: 'END_TURN' })}
+                    onJailRoll={() => dispatch({ type: 'JAIL_ROLL' })}
+                    onJailPay={() => dispatch({ type: 'JAIL_PAY' })}
+                    onJailUseCard={() => dispatch({ type: 'JAIL_USE_CARD' })}
+                  />
+
+                  <div className="flex justify-center">
+                    <Board state={state} />
+                  </div>
+
+                  <RestartDialog
+                    open={showRestart}
+                    onClose={() => setShowRestart(false)}
+                    onSoft={() => {
+                      dispatch({ type: 'RESET' });
+                      setShowRestart(false);
+                    }}
+                    onHard={() => {
+                      setShowRestart(false);
+                      setStarted(false);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            );
+          }}
         </GameArea>
       )}
     </div>

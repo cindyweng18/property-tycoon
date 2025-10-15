@@ -5,16 +5,18 @@ import DicePair from "./dice";
 export default function Controls({
   state,
   rolling = false,
-  onRollRequest,          
+  canAct = true,
+  onRollRequest,
   onBuy,
   onSkip,
   onEnd,
-  onJailRoll,            
-  onJailPay,             
-  onJailUseCard,         
+  onJailRoll,
+  onJailPay,
+  onJailUseCard,
 }: {
   state: GameState;
   rolling?: boolean;
+  canAct?: boolean;
   onRollRequest: () => void;
   onBuy: () => void;
   onSkip: () => void;
@@ -26,6 +28,7 @@ export default function Controls({
   const cp = state.players[state.currentPlayer];
   const inJailChoice = state.phase === 'jail_choice';
   const canUseCard = (cp.getOutCards ?? 0) > 0;
+  const globalDisabled = !canAct || rolling;
 
   return (
     <div className="space-y-3">
@@ -41,16 +44,24 @@ export default function Controls({
       {!inJailChoice ? (
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex flex-wrap gap-2">
-            <GameButton disabled={state.phase !== "idle" || rolling} onClick={onRollRequest}>
+            <GameButton
+              disabled={globalDisabled || state.phase !== "idle"}
+              onClick={onRollRequest}>
               Roll
             </GameButton>
-            <GameButton disabled={state.phase !== "buy_prompt" || rolling} onClick={onBuy}>
+            <GameButton
+              disabled={globalDisabled || state.phase !== "buy_prompt"}
+              onClick={onBuy}>
               Buy
             </GameButton>
-            <GameButton disabled={state.phase !== "buy_prompt" || rolling} onClick={onSkip}>
+            <GameButton
+              disabled={globalDisabled || state.phase !== "buy_prompt"}
+              onClick={onSkip}>
               Skip
             </GameButton>
-            <GameButton disabled={state.phase !== "end" || rolling} onClick={onEnd}>
+            <GameButton
+              disabled={globalDisabled || state.phase !== "end"}
+              onClick={onEnd}>
               End Turn
             </GameButton>
           </div>
@@ -59,13 +70,13 @@ export default function Controls({
       ) : (
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex flex-wrap gap-2">
-            <GameButton onClick={onJailRoll} disabled={rolling}>
+            <GameButton disabled={globalDisabled} onClick={onJailRoll}>
               Roll for Doubles
             </GameButton>
-            <GameButton onClick={onJailPay} disabled={rolling}>
+            <GameButton disabled={globalDisabled} onClick={onJailPay}>
               Pay $50
             </GameButton>
-            <GameButton onClick={onJailUseCard} disabled={rolling || !canUseCard}>
+            <GameButton disabled={globalDisabled || !canUseCard} onClick={onJailUseCard}>
               Use Card {canUseCard ? `(${cp.getOutCards})` : ''}
             </GameButton>
           </div>
