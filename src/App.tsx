@@ -91,7 +91,8 @@ export default function App() {
                       setupPlayers={setupPlayers}
                       onChangeSetup={setSetupPlayers}
                       onAddPlayer={() => {}}
-                      canAdd={false}/>
+                      canAdd={false}
+                      state={state}/>
                   </div>
                   <LogPanel entries={state.log} />
                 </div>
