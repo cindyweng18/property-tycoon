@@ -46,40 +46,66 @@ export default function Controls({
           <div className="flex flex-wrap gap-2">
             <GameButton
               disabled={globalDisabled || state.phase !== "idle"}
-              onClick={onRollRequest}>
+              onClick={onRollRequest}
+              tooltip={!canAct ? "Wait for your turn" : "Roll the dice"}>
               Roll
             </GameButton>
+
             <GameButton
               disabled={globalDisabled || state.phase !== "buy_prompt"}
-              onClick={onBuy}>
+              onClick={onBuy}
+              tooltip={!canAct ? "Not your turn" : "Buy property"}>
               Buy
             </GameButton>
+
             <GameButton
               disabled={globalDisabled || state.phase !== "buy_prompt"}
-              onClick={onSkip}>
+              onClick={onSkip}
+              tooltip={!canAct ? "Not your turn" : "Skip buying"}>
               Skip
             </GameButton>
+
             <GameButton
               disabled={globalDisabled || state.phase !== "end"}
-              onClick={onEnd}>
+              onClick={onEnd}
+              tooltip={!canAct ? "Wait for your turn" : "End your turn"}>
               End Turn
             </GameButton>
           </div>
+
           <DicePair values={state.dice} rolling={rolling} />
         </div>
       ) : (
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex flex-wrap gap-2">
-            <GameButton disabled={globalDisabled} onClick={onJailRoll}>
+            <GameButton
+              disabled={globalDisabled}
+              onClick={onJailRoll}
+              tooltip={!canAct ? "Wait for your turn" : "Try rolling doubles to get out of jail"}>
               Roll for Doubles
             </GameButton>
-            <GameButton disabled={globalDisabled} onClick={onJailPay}>
+
+            <GameButton
+              disabled={globalDisabled}
+              onClick={onJailPay}
+              tooltip={!canAct ? "Wait for your turn" : "Pay $50 to get out of jail"}>
               Pay $50
             </GameButton>
-            <GameButton disabled={globalDisabled || !canUseCard} onClick={onJailUseCard}>
+
+            <GameButton
+              disabled={globalDisabled || !canUseCard}
+              onClick={onJailUseCard}
+              tooltip={
+                !canAct
+                  ? "Wait for your turn"
+                  : canUseCard
+                  ? "Use your Get Out of Jail Free card"
+                  : "You don't have any cards"
+              }>
               Use Card {canUseCard ? `(${cp.getOutCards})` : ''}
             </GameButton>
           </div>
+
           <DicePair values={state.dice} rolling={rolling} />
         </div>
       )}
