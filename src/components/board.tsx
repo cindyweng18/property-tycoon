@@ -38,9 +38,9 @@ export default function Board({ state }: { state: GameState }) {
                   key={`${r},${c}`}
                   className={[
                     "relative rounded-lg border bg-white/95 backdrop-blur",
-                    "flex flex-col items-center justify-between p-2 sm:p-3 md:p-4",
+                    "grid grid-rows-[auto_auto_42px] items-center justify-items-center p-2 sm:p-3 md:p-4",
                     owned ? "border-2" : "border-zinc-200",
-                    "text-zinc-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden",
+                    "text-zinc-800 shadow-sm hover:shadow-md transition-shadow",
                   ].join(" ")}
                   style={{
                     aspectRatio: '1 / 1',
@@ -75,7 +75,7 @@ export default function Board({ state }: { state: GameState }) {
                       : ''}
                   </div>
 
-                  <div className="grid grid-cols-2 grid-rows-2 gap-1 place-items-center w-full mt-2">
+                  <div className="flex justify-center items-center gap-1 h-[42px] flex-wrap">
                     {occupants.map((p) => (
                       <div
                         key={p.id}
