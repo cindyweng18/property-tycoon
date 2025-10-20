@@ -13,6 +13,7 @@ export default function App() {
   >([{ name: 'You', color: '#3b82f6', isBot: false }]);
 
   const [started, setStarted] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const [showRestart, setShowRestart] = useState(false);
 
   const canAdd = setupPlayers.length < 4;
@@ -25,6 +26,8 @@ export default function App() {
       { name: `Player ${idx}`, color: palette[(idx - 1) % palette.length], isBot: false },
     ]);
   };
+
+  const canStart = setupPlayers.length >= 2 && !setupPlayers[0].isBot;   
 
   const onStart = () => {
     if (setupPlayers.length === 0) return;
@@ -47,11 +50,13 @@ export default function App() {
                 canAdd={canAdd}/>
             </div>
 
-            <div className="bg-white/70 backdrop-blur rounded-xl shadow p-4 text-zinc-600">
-              <div className="text-lg font-semibold mb-1">Game Log</div>
+            <div className="bg-white/70 backdrop-blur rounded-xl shadow p-4 text-zinc-700">
               <div className="text-sm">
-                Logs will appear here after you press <b>Start</b>.
+                Add <b>at least 2 players</b> to begin. Player 1 must be human.
               </div>
+              {startError && (
+                <div className="mt-2 text-sm text-red-600">{startError}</div>
+              )}
             </div>
           </div>
 
@@ -68,13 +73,32 @@ export default function App() {
             <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[2px] rounded-xl grid place-items-center">
               <button
                 onClick={onStart}
-                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition" >
+                disabled={!canStart}
+                className={`px-5 py-2.5 rounded-lg font-semibold shadow transition
+                  ${canStart
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  }`}
+                title={
+                  canStart
+                    ? 'Start the game'
+                    : setupPlayers.length < 2
+                      ? 'Add at least 2 players'
+                      : 'Player 1 must be human'
+                }>
                 Start Game
               </button>
+
+              {!canStart && (
+                <div className="mt-3 text-xs text-zinc-600">
+                  Players: {setupPlayers.length} / 2+ required
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
 
       {started && (
         <GameArea initialPlayers={setupPlayers}>
