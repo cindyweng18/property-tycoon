@@ -9,8 +9,10 @@ import type { Player } from './games/types';
 
 export default function App() {
   const [setupPlayers, setSetupPlayers] = useState<
-    Array<Pick<Player, 'name' | 'color' | 'isBot'>>
-  >([{ name: 'You', color: '#3b82f6', isBot: false }]);
+    Array<Pick<Player, 'name' | 'color' | 'isBot'>>>([
+    { name: 'You', color: '#3b82f6', isBot: false },
+    { name: 'Player 2', color: '#ef4444', isBot: true },]);
+
 
   const [started, setStarted] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
