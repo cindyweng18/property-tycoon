@@ -33,12 +33,10 @@ export default function PlayerPanel({
         <div className="space-y-3">
           {setupPlayers.map((p, idx) => {
             const isFirst = idx === 0;
+            const canRemoveThis = setupPlayers.length > 2 && idx >= 2;
 
-            const canRemove = setupPlayers.length > 2; 
             return (
-              <div
-                key={idx}
-                className="flex items-center gap-2">
+              <div key={idx} className="flex items-center gap-2">
                 <input
                   type="color"
                   className="h-8 w-10 rounded border border-zinc-300"
@@ -50,7 +48,7 @@ export default function PlayerPanel({
                   className="flex-1 rounded border border-zinc-300 px-2 py-1 text-sm"
                   value={p.name}
                   onChange={(e) => updateAt(idx, { name: e.target.value })}
-                  placeholder={`Player ${idx + 1}`}/>
+                  placeholder={`Player ${idx + 1}`} />
 
                 <label
                   className={`ml-1 flex items-center gap-1 text-xs ${
@@ -65,12 +63,12 @@ export default function PlayerPanel({
                   Bot
                 </label>
 
-                {canRemove && (
+                {canRemoveThis && (
                   <button
                     type="button"
                     onClick={() => removeAt(idx)}
                     className="ml-1 h-7 w-7 grid place-items-center rounded border border-red-200 text-red-600 hover:bg-red-50 transition"
-                    title="Remove player"
+                    title={`Remove ${p.name}`}
                     aria-label={`Remove ${p.name}`}>
                     ✕
                   </button>
@@ -87,7 +85,7 @@ export default function PlayerPanel({
             }`}
             onClick={onAddPlayer}
             disabled={!canAdd}
-            title={canAdd ? 'Add player' : 'Max 4 players'} >
+            title={canAdd ? 'Add player' : 'Max 4 players'}>
             + Add Player
           </button>
           <div className="text-xs text-zinc-600">{setupPlayers.length} / 4</div>
@@ -109,8 +107,7 @@ export default function PlayerPanel({
           <div
             key={p.id}
             className={`flex justify-between items-center gap-2 rounded-md border px-2.5 py-1.5 ${
-              p.bankrupt ? 'opacity-50 bg-red-50' : 'bg-white/80'
-            }`}>
+              p.bankrupt ? 'opacity-50 bg-red-50' : 'bg-white/80'}`}>
             <div className="flex items-center gap-2">
               <div
                 className="h-5 w-5 rounded-full ring-2 ring-white"
