@@ -16,43 +16,65 @@ export default function GameArea({ initialPlayers, children }: Props) {
   const init = useMemo(() => initialState(initialPlayers), [initialPlayers]);
   const [state, dispatch] = useReducer(reducer, init);
   const [rolling, setRolling] = useState(false);
+  
   const onRollRequest = () => {
     if (state.phase !== 'idle' || rolling) return;
     setRolling(true);
     setTimeout(() => {
-      dispatch({ type: 'ROLL' }); 
+      dispatch({ type: 'ROLL' });          
       setTimeout(() => setRolling(false), 600);
-    }, 400);
+    }, 400); 
   };
+
 
   useEffect(() => {
-  const cp = state.players[state.currentPlayer];
-  if (!cp?.isBot || cp.bankrupt) return;
+    const cp = state.players[state.currentPlayer];
+    if (!cp?.isBot || cp.bankrupt) return;
 
-  const takeTurn = () => {
+    const t = setTimeout(() => {
 
-    if (state.phase === 'jail_choice') {
-      if (cp.inJailTurns > 1) {
-        dispatch({ type: 'JAIL_ROLL' });
-      } else {
-        dispatch({ type: 'JAIL_PAY' });
+      if (state.phase === 'idle' && !rolling) {
+        onRollRequest(); 
+        return;
       }
-      setTimeout(() => dispatch({ type: 'END_TURN' }), 800);
-      return;
-    }
 
-    if (state.phase === 'idle') {
-      dispatch({ type: 'ROLL' });
-      setTimeout(() => {
-        if (state.phase === 'buy_prompt') dispatch({ type: 'BUY' });
-        setTimeout(() => dispatch({ type: 'END_TURN' }), 500);
-      }, 600);
-    }
-  };
+      if (state.phase === 'buy_prompt') {
+        const tile = state.tiles[state.players[state.currentPlayer].position];
+        const canBuy =
+          tile.type === 'PROPERTY' &&
+          tile.price != null &&
+          tile.ownerId == null &&
+          cp.cash >= tile.price;
 
-  const timer = setTimeout(takeTurn, 600);
-  return () => clearTimeout(timer);
-}, [state.currentPlayer, state.phase, state.players]);
+        dispatch({ type: canBuy ? 'BUY' : 'SKIP_BUY' });
+        return;
+      }
+
+      if (state.phase === 'jail_choice') {
+        if (cp.cash >= 50) {
+          dispatch({ type: 'JAIL_PAY' });
+        } else {
+          dispatch({ type: 'JAIL_ROLL' });
+        }
+        return;
+      }
+
+      if (state.phase === 'end') {
+        dispatch({ type: 'END_TURN' });
+        return;
+      }
+    }, 450); 
+
+    return () => clearTimeout(t);
+  }, [
+    state.currentPlayer,
+    state.phase,
+    state.players,
+    state.tiles,
+    rolling,
+    onRollRequest,
+    dispatch,
+  ]);
 
   return <>{children({ state, dispatch, rolling, onRollRequest })}</>;
 }
